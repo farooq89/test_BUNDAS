@@ -24,39 +24,7 @@ jobs:
 
     steps:
 
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-      - name: Google Auth
-        id: auth
-        uses: 'google-github-actions/auth@v1'
-        with:
-          credentials_json: '${{secrets.GCP_CREDENTIALS}}'
-
-      - name: Docker Auth
-        run: |-
-          gcloud auth configure-docker "${{env.GAR_LOCATION}}-docker.pkg.dev"
-
-
-      - name: Build and push the Docker image
-        run: |-
-          docker build -f kubernetes-deploy/dockerfiles/main-worker.dockerfile  --no-cache -t "${{env.GAR_LOCATION}}-docker.pkg.dev/${{env.PROJECT_ID}}/${{env.GAR_NAME}}/${{env.SERVICE}}:latest" ./
-          docker push "${{env.GAR_LOCATION}}-docker.pkg.dev/${{env.PROJECT_ID}}/${{env.GAR_NAME}}/${{env.SERVICE}}:latest"
-      
-      
-      - name: Auth GKE Cluster
-        uses: 'google-github-actions/get-gke-credentials@v2'
-        with:
-          cluster_name: 'ocean'
-          location: 'us-east4'
-
-      - name: Install kubectl
-        run: |
-          curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
-          chmod +x kubectl
-          sudo mv kubectl /usr/local/bin/
-
-      - name: Deploy on cluster
+      - name: test
         run: |
           ls
 

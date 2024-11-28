@@ -1,0 +1,64 @@
+name: Main-worker
+
+# on:
+#   push:
+#     branches: [ "devops" ]
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'The branch to use for this workflow' # Provide a description
+        required: true # Set to true to make this input mandatory
+        default: 'devops' 
+
+env:
+  PROJECT_ID: ocean-246520
+  GAR_NAME: ocean
+  GAR_LOCATION: us-east4
+  SERVICE: main-worker
+  REGION: us-east4
+     
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Google Auth
+        id: auth
+        uses: 'google-github-actions/auth@v1'
+        with:
+          credentials_json: '${{secrets.GCP_CREDENTIALS}}'
+
+      - name: Docker Auth
+        run: |-
+          gcloud auth configure-docker "${{env.GAR_LOCATION}}-docker.pkg.dev"
+
+
+      - name: Build and push the Docker image
+        run: |-
+          docker build -f kubernetes-deploy/dockerfiles/main-worker.dockerfile  --no-cache -t "${{env.GAR_LOCATION}}-docker.pkg.dev/${{env.PROJECT_ID}}/${{env.GAR_NAME}}/${{env.SERVICE}}:latest" ./
+          docker push "${{env.GAR_LOCATION}}-docker.pkg.dev/${{env.PROJECT_ID}}/${{env.GAR_NAME}}/${{env.SERVICE}}:latest"
+      
+      
+      - name: Auth GKE Cluster
+        uses: 'google-github-actions/get-gke-credentials@v2'
+        with:
+          cluster_name: 'ocean'
+          location: 'us-east4'
+
+      - name: Install kubectl
+        run: |
+          curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+          chmod +x kubectl
+          sudo mv kubectl /usr/local/bin/
+
+      - name: Deploy on cluster
+        run: |
+          ls
+
+            
+      
